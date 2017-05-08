@@ -40,7 +40,7 @@ void on_exit() {
 	LOG("Bye!");
 }
 
-void err_and_exit(HANDLE dll, FAIL_CODES code) {
+void err_and_exit(FAIL_CODES code) {
 	switch(code) {
 		case DEVICE_NOT_CONNECTED:
 			LOG("No controller found!\n");
@@ -64,13 +64,13 @@ int main() {
 	LOG("Loading...");
 	atexit(on_exit);
 	dll = LoadLibrary("XInput1_3");
-	if (!dll) err_and_exit(dll, DLL_LOAD);
+	if (!dll) err_and_exit(DLL_LOAD);
 
 	POWER_OFF_T power_off = (POWER_OFF_T) GetProcAddress(dll, MAKEINTRESOURCE(103));
 	// This is a special hidden function for getting the guide button
 	XInputGetState_T xinput_get_state = (XInputGetState_T) GetProcAddress(dll, MAKEINTRESOURCE(100));
-	if (!power_off) err_and_exit(dll, GET_FUNC_POWER_OFF);
-	if (!xinput_get_state) err_and_exit(dll, GET_FUNC_GET_STATE);
+	if (!power_off) err_and_exit(GET_FUNC_POWER_OFF);
+	if (!xinput_get_state) err_and_exit(GET_FUNC_GET_STATE);
 
 	XINPUT_GAMEPAD_SECRET x_state = {0};
 	int wasPressed = 0;
