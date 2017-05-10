@@ -103,7 +103,7 @@ int main() {
 				set_state(0, &vib_struct);
 				Sleep(500);
 				power_off(0);
-				memset(&x_state, 0, sizeof(XINPUT_GAMEPAD_SECRET));
+				x_state = (XINPUT_GAMEPAD_SECRET) {0};
 			} else {
 				wasPressed = 1;
 			}
