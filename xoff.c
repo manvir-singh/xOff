@@ -31,7 +31,7 @@ typedef struct _XINPUT_VIBRATION {
 
 typedef int (*POWER_OFF_T)(int);
 typedef DWORD (*SET_STATE_T)(DWORD, XINPUT_VIBRATION*);
-typedef DWORD (*XInputGetState_T)(DWORD, XINPUT_GAMEPAD_SECRET*);
+typedef DWORD (*GET_STATE_T)(DWORD, XINPUT_GAMEPAD_SECRET*);
 HANDLE dll;
 
 #if DEBUG
@@ -77,18 +77,18 @@ int main() {
 	if (!dll) err_and_exit(DLL_LOAD);
 
 	POWER_OFF_T power_off = (POWER_OFF_T) GetProcAddress(dll, MAKEINTRESOURCE(103));
-	SET_STATE_T set_state = (SET_STATE_T) GetProcAddress(dll, "XInputSetState");
-	// This is a special hidden function for getting the guide button
-	XInputGetState_T xinput_get_state = (XInputGetState_T) GetProcAddress(dll, MAKEINTRESOURCE(100));
 	if (!power_off) err_and_exit(GET_FUNC_POWER_OFF);
+	SET_STATE_T set_state = (SET_STATE_T) GetProcAddress(dll, "XInputSetState");
 	if (!set_state) err_and_exit(GET_FUNC_SET_STATE);
-	if (!xinput_get_state) err_and_exit(GET_FUNC_GET_STATE);
+	// This is a special hidden function for getting the guide button
+	GET_STATE_T get_state = (GET_STATE_T) GetProcAddress(dll, MAKEINTRESOURCE(100));
+	if (!get_state) err_and_exit(GET_FUNC_GET_STATE);
 
 	XINPUT_GAMEPAD_SECRET x_state = {0};
 	int wasPressed = 0;
 	LOG("Running.");
 	while(1) {
-		if (xinput_get_state(0, &x_state) == ERROR_DEVICE_NOT_CONNECTED) {
+		if (get_state(0, &x_state) == ERROR_DEVICE_NOT_CONNECTED) {
 			Sleep(1);
 			continue;
 		}
