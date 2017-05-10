@@ -7,7 +7,8 @@ typedef enum {
 	DLL_LOAD,
 	GET_FUNC_POWER_OFF,
 	GET_FUNC_GET_STATE,
-	DEVICE_NOT_CONNECTED
+	DEVICE_NOT_CONNECTED,
+	GET_FUNC_SET_STATE
 } FAIL_CODES;
 
 // Hidden struct in xinput dll for getting guide button input
@@ -22,8 +23,14 @@ typedef struct {
     SHORT sThumbRY;
 } XINPUT_GAMEPAD_SECRET;
 
+typedef struct _XINPUT_VIBRATION {
+  WORD wLeftMotorSpeed;
+  WORD wRightMotorSpeed;
+} XINPUT_VIBRATION, *PXINPUT_VIBRATION;
+
 
 typedef int (*POWER_OFF_T)(int);
+typedef DWORD (*SET_STATE_T)(DWORD, XINPUT_VIBRATION*);
 typedef DWORD (*XInputGetState_T)(DWORD, XINPUT_GAMEPAD_SECRET*);
 HANDLE dll;
 
@@ -51,6 +58,9 @@ void err_and_exit(FAIL_CODES code) {
 		case GET_FUNC_POWER_OFF:
 			LOG("Unable to find the poweroff function!\n");
 			break;
+		case GET_FUNC_SET_STATE:
+			LOG("Unable to find setstate function!\n");
+			break;
 		case DLL_LOAD:
 			LOG("Unable to load Xinput dll!\n");
 			break;
@@ -67,9 +77,11 @@ int main() {
 	if (!dll) err_and_exit(DLL_LOAD);
 
 	POWER_OFF_T power_off = (POWER_OFF_T) GetProcAddress(dll, MAKEINTRESOURCE(103));
+	SET_STATE_T set_state = (SET_STATE_T) GetProcAddress(dll, "XInputSetState");
 	// This is a special hidden function for getting the guide button
 	XInputGetState_T xinput_get_state = (XInputGetState_T) GetProcAddress(dll, MAKEINTRESOURCE(100));
 	if (!power_off) err_and_exit(GET_FUNC_POWER_OFF);
+	if (!set_state) err_and_exit(GET_FUNC_SET_STATE);
 	if (!xinput_get_state) err_and_exit(GET_FUNC_GET_STATE);
 
 	XINPUT_GAMEPAD_SECRET x_state = {0};
@@ -86,6 +98,10 @@ int main() {
 			if (wasPressed) {
 				LOG("Guide button was pressed before, powering off.");
 				wasPressed = 0;
+				// Vibrate
+				XINPUT_VIBRATION vib_struct = {0, 65535};
+				set_state(0, &vib_struct);
+				Sleep(500);
 				power_off(0);
 				memset(&x_state, 0, sizeof(XINPUT_GAMEPAD_SECRET));
 			} else {
